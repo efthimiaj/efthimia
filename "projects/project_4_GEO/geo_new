@@ -1,0 +1,28 @@
+#!/bin/bash
+
+#current working directory= /home/efthimia
+#you have already downloaded the toolkit (check geo_script)
+#make the directories SRR= output of prefetch, tmp = for the temporary files and fastq = for the final fastq files
+#in the directory SRR create the text file "accesions.txt" with the name of the SRRs
+
+
+#Verify that the binaries will be found by the shell
+which fastq-dump
+
+
+#loop through the SRRs
+for run in $(cat ~/SRR/new_access.txt); do
+    echo "Processing $run..."
+
+    #download the SRR
+    prefetch "$run" --outdir /home/efthimia/SRR
+
+    #convert to fastq, -t for the temporary directory, -p for multithreading
+    fasterq-dump -p -t ~/tmp  --outdir ~/fastq "$run"
+
+    #gzip the fastq files
+    gzip ${run}*.fastq
+
+    echo "$run is completed" 
+
+done

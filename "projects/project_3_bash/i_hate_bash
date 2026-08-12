@@ -1,0 +1,59 @@
+#!/bin/bash
+
+#output directory = current directory ./
+
+#set absolute paths to variables
+reference="/stanley/kubrick/Genomes/mm10/Hisat2Index/mm10/genome"
+bed="/michel/gondry/mm10_RefSeq.bed"
+gtf="/wes/anderson/mm10/Mus_musculus.GRCm38.101.ccds.modified.gtf"
+
+
+#looping through the FASTQ files
+for fq1 in *_R1.fastq; do
+    sample=${fq1%_R1.fastq}
+    fq2=${fq1/_R1.fastq/_R2.fastq}
+
+    echo "Processing sample: $sample"
+    echo "forward is: $fq1"
+    echo "reverse is: $fq2"
+
+
+
+    #aligning reads to the reference genome 
+   hisat2 -p 4 --dta -x "$reference" -1 "$fq1" -2 "$fq2" -S "./$sample.sam"
+
+    echo "Aligned $sample.sam"
+
+    #converting SAM to BAM
+    samtools view -bS "./$sample.sam" | samtools sort -o "./$sample_sorted.bam"
+
+    echo "Converted and sorted $sample.sam"
+
+
+    #indexing the sorted BAM files
+    samtools index "./$sample_sorted.bam"
+
+    echo "Indexed $sample_sorted.bam"
+
+
+    #removing the SAM files
+    rm "./$sample.sam"
+
+
+    #inferring the library strandness
+    infer_experiment.py -r "$bed" -i "./$sample_sorted.bam"
+
+    echo "Inferring library strandness for $sample_sorted.bam"
+
+
+    #mapping the reads to genes with htseq counts
+    htseq-count -f bam -r pos -s reverse -i gene_id \
+                "./$sample_sorted.bam" "$gtf" >  "./$sample_counts.txt"
+                        
+
+
+    echo "Counting reads for $sample_sorted.bam"
+
+done
+
+echo "All samples processed"

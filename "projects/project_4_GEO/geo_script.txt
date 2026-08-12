@@ -1,0 +1,48 @@
+#!/bin/bash
+
+#current working directory: /home/efthimia
+#for a single SRX file??
+
+
+#export path="/home/efthimia/sratoolkit.3.2.1-ubuntu64=$path"
+
+
+#maybe loop through the SRRs
+for run in SRR*; do
+prefetch $run
+fasterq-dump -t /tmp $run
+done
+
+
+
+
+#fetch the tar file from the canonical location at NCBI
+wget --output-document sratoolkit.tar.gz https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-ubuntu64.tar.gz
+
+#extract the contents of the tar file
+tar -vxzf sratoolkit.tar.gz
+
+#append the path to the binaries to your PATH environment variable
+export PATH=$PWD/sratoolkit.3.2.1-ubuntu64/bin:$PATH
+
+
+#Verify that the binaries will be found by the shell
+which fastq-dump
+
+#make the directory for the downloaded by prefetch files
+mkdir prefetch
+cd prefetch
+
+#make the directory for the temporary files
+mkdir 
+
+
+#maybe loop through the SRRs
+for run in SRR*; do
+    #download the file
+    prefetch $run
+
+    #convert to fastq format with fasterq-dump, -t for teporary directory and -p for multithreading(?)      
+    fasterq-dump -p -t /tmp $run
+
+done
